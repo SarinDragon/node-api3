@@ -51,6 +51,67 @@ app.get('/products', function(req, res) {
   )
 })
 
-app.listen(5000, () => {
-  console.log('Server is started.')
+// เรียงลับดับจากคนที่ซื้อเยอะ => น้อยที่สุด
+app.get("/top_customers", function (req, res) {
+  connection.query(
+    `SELECT 
+    C.firstname, 
+    SUM(O.quantity*P.price) AS price_sum 
+  FROM a1_customer AS C 
+    INNER JOIN a1_Order AS O ON C.Cid = O.Oid
+    INNER JOIN a1_Product AS P ON O.Pid = P.Pid 
+  GROUP BY 
+    C.Cid 
+  ORDER BY 
+    price_sum DESC;`,
+    function (err, results) {
+      res.json(results);
+    }
+  );
+});
+
+// เรียงลับดับจากคนที่ซื้อเยอะ => น้อยที่สุด
+app.get('/top_products', function(req, res){
+  connection.query(
+    `SELECT O.id, P.Pname, O.quantity, SUM(O.quantity*P.price) as Total_quantity FROM a1_Order as O INNER JOIN a1_product as P ON O.Pid= P.Pid GROUP BY O.id, P.Name, O.quantity, P.price ORDER BY Total_quantity DESC;`,
+    function (err, results) {
+      res.json(results);
+    }
+  );
+});
+
+
+app.post("/createusers", function (req, res) {
+  const firstname = req.body.firstname;
+  const lastname = req.body.lastname;
+  const email = req.body.email;
+  const address = req.body.address;
+  const phone = req.body.phone;
+  connection.query(
+    `INSERT INTO a1_customer (firstname, lastname, email, address, phone) VALUES (?, ?, ?, ?, ? )`,
+    [firstname, lastname, email, address, phone],
+    function (err, results) {
+      if (err) {
+        res.json(err);
+      }
+      res.json(results);
+    }
+  );
+});
+
+app.post('/orders', function(req, res) {
+  const values = req.body
+  console.log(values)
+  connection.query(
+    'INSERT INTO a1_Order (Oid, Cid, Pid, quantity) VALUES ?', [values],
+    function(err, results) {
+      console.log(results) //แสดงผลที่ console
+      res.json(results) //ตอบกลับ request
+    }
+  )
 })
+
+
+app.listen(5000, () => {
+  console.log("Server is started.");
+});
